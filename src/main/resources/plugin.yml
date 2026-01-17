@@ -1,0 +1,28 @@
+name: PeacefulPlayers
+version: ${project.version}
+main: pl.psalkowski.peacefulplayers.PeacefulPlayersPlugin
+api-version: '1.21'
+description: Allow players to toggle peaceful mode where mobs only attack after being attacked
+authors:
+  - psalkowski
+
+commands:
+  peaceful:
+    description: Toggle peaceful mode for a player
+    usage: /<command> [player] [peaceful|survival]
+    permission: peacefulplayers.use
+  peacefullist:
+    description: List all players with peaceful mode enabled
+    usage: /<command>
+    permission: peacefulplayers.list
+
+permissions:
+  peacefulplayers.use:
+    description: Allows toggling peaceful mode
+    default: op
+  peacefulplayers.list:
+    description: Allows listing peaceful players
+    default: op
+  peacefulplayers.admin:
+    description: Allows setting mode for other players
+    default: op
