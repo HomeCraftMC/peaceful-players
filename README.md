@@ -7,6 +7,7 @@ A Paper plugin for family-friendly Minecraft servers that allows players to togg
 - **Neutral Mobs**: Hostile mobs won't target peaceful players - they walk around as if the player doesn't exist
 - **Revenge Mechanic**: If a peaceful player attacks a mob, only that specific mob can target back (not nearby mobs)
 - **Keep Inventory**: Peaceful players keep their inventory and XP on death
+- **Damage Reduction**: Configurable damage reduction for peaceful players (default: 0%)
 - **Per-Player Settings**: Each player can have different mode (peaceful or survival)
 - **Persistent**: Settings are saved to disk and persist across server restarts
 - **Tab Completion**: Full auto-complete support for commands
@@ -53,11 +54,30 @@ When a player is in peaceful mode:
    - No items drop
    - No XP orbs drop
 
+4. **Damage Reduction** (configurable): Peaceful players can receive reduced damage from all sources
+   - Configured in `config.yml`
+   - Default: 0% (no reduction)
+   - Set to 0.5 for 50% reduction, 1.0 for invincibility
+
 ### Survival Mode
 
 Normal Minecraft behavior - mobs target and attack as usual, items drop on death.
 
 ## Configuration
+
+### config.yml
+
+Main plugin configuration in `plugins/PeacefulPlayers/config.yml`:
+
+```yaml
+# Damage reduction for players in peaceful mode (0.0 - 1.0)
+# 0.0 = no reduction (default)
+# 0.5 = 50% reduction (half damage)
+# 1.0 = 100% reduction (no damage)
+damage-reduction: 0.0
+```
+
+### players.yml
 
 Player settings are stored in `plugins/PeacefulPlayers/players.yml`:
 
@@ -86,6 +106,7 @@ Players not in the file default to SURVIVAL mode.
 
 - `EntityTargetLivingEntityEvent` - Cancels mob targeting for peaceful players
 - `EntityDamageByEntityEvent` - Records when peaceful players attack mobs
+- `EntityDamageEvent` - Applies damage reduction for peaceful players
 - `EntityDeathEvent` - Cleans up tracked mobs when they die
 - `PlayerDeathEvent` - Keeps inventory for peaceful players
 

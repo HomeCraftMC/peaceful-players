@@ -1,0 +1,7 @@
+# PeacefulPlayers Configuration
+
+# Damage reduction for players in peaceful mode (0.0 - 1.0)
+# 0.0 = no reduction (default)
+# 0.5 = 50% reduction (half damage)
+# 1.0 = 100% reduction (no damage)
+damage-reduction: 0.0

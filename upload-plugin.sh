@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-JAR_FILE="target/PeacefulPlayers-1.0.0.jar"
+JAR_FILE=$(ls target/PeacefulPlayers-*.jar 2>/dev/null | head -1)
 S3_BUCKET="minecraft-plugins"
 S3_ENDPOINT="https://s3.psalkowski.pl"
 S3_KEY="PeacefulPlayers.jar"

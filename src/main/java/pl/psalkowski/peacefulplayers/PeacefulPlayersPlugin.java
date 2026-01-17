@@ -3,6 +3,7 @@ package pl.psalkowski.peacefulplayers;
 import org.bukkit.plugin.java.JavaPlugin;
 import pl.psalkowski.peacefulplayers.command.PeacefulCommand;
 import pl.psalkowski.peacefulplayers.listener.MobTargetListener;
+import pl.psalkowski.peacefulplayers.listener.PlayerDamageListener;
 import pl.psalkowski.peacefulplayers.listener.PlayerDeathListener;
 
 public class PeacefulPlayersPlugin extends JavaPlugin {
@@ -11,7 +12,11 @@ public class PeacefulPlayersPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        saveDefaultConfig();
+
         modeManager = new PlayerModeManager(this);
+
+        double damageReduction = getConfig().getDouble("damage-reduction", 0.0);
 
         PeacefulCommand command = new PeacefulCommand(modeManager);
         getCommand("peaceful").setExecutor(command);
@@ -21,8 +26,9 @@ public class PeacefulPlayersPlugin extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new MobTargetListener(modeManager), this);
         getServer().getPluginManager().registerEvents(new PlayerDeathListener(modeManager), this);
+        getServer().getPluginManager().registerEvents(new PlayerDamageListener(modeManager, damageReduction), this);
 
-        getLogger().info("PeacefulPlayers enabled!");
+        getLogger().info("PeacefulPlayers enabled! Damage reduction: " + (damageReduction * 100) + "%");
     }
 
     @Override
