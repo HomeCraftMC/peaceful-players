@@ -104,11 +104,14 @@ Players not in the file default to PEACEFUL mode.
 4. All players start in peaceful mode by default
 5. Use `/peaceful survival` to switch to survival mode
 
-## Technical Details
+## Compatibility
 
-- **Minecraft Version**: 1.21+
-- **Server Software**: Paper (or Paper forks)
-- **Java Version**: 21+
+| Plugin Version | Minecraft | Paper | Java |
+|----------------|-----------|-------|------|
+| 1.2.x          | 1.21.11   | 1.21  | 21+  |
+| 1.1.x          | 1.21.11   | 1.21  | 21+  |
+
+**Server Software**: Paper or Paper-based forks (Purpur, Pufferfish, etc.)
 
 ### Events Handled
 
