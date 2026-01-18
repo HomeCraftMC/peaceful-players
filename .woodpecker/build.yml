@@ -1,18 +1,26 @@
 ---
 when:
+  - event: push
+    branch: main
   - event: tag
     tag: "v*"
   - event: manual
 
 steps:
-  build:
+  build-snapshot:
     image: maven:3.9-eclipse-temurin-21
+    when:
+      - event: push
+        branch: main
     commands:
       - mvn clean package -DskipTests -q
-      - cp target/PeacefulPlayers-*.jar target/PeacefulPlayers.jar
+      - cp target/PeacefulPlayers-*.jar target/PeacefulPlayers-SNAPSHOT.jar
 
-  upload:
+  upload-snapshot:
     image: minio/mc:latest
+    when:
+      - event: push
+        branch: main
     environment:
       S3_ACCESS_KEY:
         from_secret: s3_access_key
@@ -20,5 +28,58 @@ steps:
         from_secret: s3_secret_key
     commands:
       - mc alias set minio https://s3.psalkowski.pl "$S3_ACCESS_KEY" "$S3_SECRET_KEY"
+      - mc cp target/PeacefulPlayers-SNAPSHOT.jar minio/minecraft-plugins/PeacefulPlayers-SNAPSHOT.jar
+      - echo "Uploaded SNAPSHOT to https://s3.psalkowski.pl/minecraft-plugins/PeacefulPlayers-SNAPSHOT.jar"
+
+  build-release:
+    image: maven:3.9-eclipse-temurin-21
+    when:
+      - event: tag
+    commands:
+      - VERSION=${CI_COMMIT_TAG#v}
+      - echo "Building release version $VERSION"
+      - mvn versions:set -DnewVersion=$VERSION -DgenerateBackupPoms=false -q
+      - mvn clean package -DskipTests -q
+      - cp target/PeacefulPlayers-${VERSION}.jar target/PeacefulPlayers.jar
+      - cp target/PeacefulPlayers-${VERSION}.jar target/PeacefulPlayers-${VERSION}.jar
+
+  upload-release:
+    image: minio/mc:latest
+    when:
+      - event: tag
+    environment:
+      S3_ACCESS_KEY:
+        from_secret: s3_access_key
+      S3_SECRET_KEY:
+        from_secret: s3_secret_key
+    commands:
+      - VERSION=${CI_COMMIT_TAG#v}
+      - mc alias set minio https://s3.psalkowski.pl "$S3_ACCESS_KEY" "$S3_SECRET_KEY"
       - mc cp target/PeacefulPlayers.jar minio/minecraft-plugins/PeacefulPlayers.jar
-      - echo "Uploaded to https://s3.psalkowski.pl/minecraft-plugins/PeacefulPlayers.jar"
+      - mc cp target/PeacefulPlayers-${VERSION}.jar minio/minecraft-plugins/PeacefulPlayers-${VERSION}.jar
+      - echo "Uploaded release to https://s3.psalkowski.pl/minecraft-plugins/PeacefulPlayers.jar"
+      - echo "Uploaded versioned to https://s3.psalkowski.pl/minecraft-plugins/PeacefulPlayers-${VERSION}.jar"
+
+  bump-version:
+    image: maven:3.9-eclipse-temurin-21
+    when:
+      - event: tag
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    commands:
+      - apt-get update && apt-get install -y git
+      - VERSION=${CI_COMMIT_TAG#v}
+      - IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+      - NEXT_MINOR=$((MINOR + 1))
+      - NEXT_VERSION="${MAJOR}.${NEXT_MINOR}.0-SNAPSHOT"
+      - echo "Bumping version to $NEXT_VERSION"
+      - git config --global user.email "ci@homecraftmc.com"
+      - git config --global user.name "HomeCraft CI"
+      - git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/HomeCraftMC/peaceful-players.git
+      - git fetch origin main
+      - git checkout main
+      - mvn versions:set -DnewVersion=$NEXT_VERSION -DgenerateBackupPoms=false -q
+      - git add pom.xml
+      - git commit -m "Bump version to $NEXT_VERSION [skip ci]"
+      - git push origin main
