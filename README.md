@@ -87,14 +87,22 @@ Player settings are stored in `plugins/PeacefulPlayers/players.yml`:
 6ba7b810-9dad-11d1-80b4-00c04fd430c8: PEACEFUL
 ```
 
-Players not in the file default to SURVIVAL mode.
+Players not in the file default to PEACEFUL mode.
 
 ## Installation
+
+### Download
+
+- **Latest Release**: https://s3.psalkowski.pl/minecraft-plugins/peaceful-players/PeacefulPlayers.jar
+- **Snapshot (dev)**: https://s3.psalkowski.pl/minecraft-plugins/peaceful-players/PeacefulPlayers-X.Y.Z-SNAPSHOT.jar
+
+### Steps
 
 1. Download `PeacefulPlayers.jar`
 2. Place in your server's `plugins/` folder
 3. Restart the server
-4. Use `/peaceful <player> peaceful` to enable peaceful mode for players
+4. All players start in peaceful mode by default
+5. Use `/peaceful survival` to switch to survival mode
 
 ## Technical Details
 
@@ -116,7 +124,13 @@ Players not in the file default to SURVIVAL mode.
 mvn clean package
 ```
 
-Output: `target/PeacefulPlayers-1.0.0.jar`
+Output: `target/PeacefulPlayers-<version>.jar`
+
+## CI/CD
+
+Builds are automated via Woodpecker CI:
+- **Push to main**: Builds and uploads `PeacefulPlayers-X.Y.Z-SNAPSHOT.jar`
+- **Tag `vX.Y.Z`**: Builds release, uploads `PeacefulPlayers.jar` (latest) and `PeacefulPlayers-X.Y.Z.jar` (versioned), then bumps version
 
 ## License
 
