@@ -78,7 +78,7 @@ steps:
           -F "data={
             \"name\": \"v$$VERSION\",
             \"version_number\": \"$$VERSION\",
-            \"project_id\": \"peaceful-players\",
+            \"project_id\": \"OWbY6qq5\",
             \"file_parts\": [\"file\"],
             \"dependencies\": [],
             \"game_versions\": $$GAME_VERSIONS,
