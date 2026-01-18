@@ -104,7 +104,9 @@ Players not in the file default to PEACEFUL mode.
 ### Download
 
 - **Latest Release**: https://s3.psalkowski.pl/minecraft-plugins/peaceful-players/PeacefulPlayers.jar
-- **Snapshot (dev)**: https://s3.psalkowski.pl/minecraft-plugins/peaceful-players/PeacefulPlayers-X.Y.Z-SNAPSHOT.jar
+- **Snapshot (dev)**: https://s3.psalkowski.pl/minecraft-plugins/peaceful-players/PeacefulPlayers-SNAPSHOT.jar
+- **GitHub Releases**: https://github.com/HomeCraftMC/peaceful-players/releases
+- **Modrinth**: https://modrinth.com/plugin/peaceful-players
 
 ### Steps
 
@@ -143,8 +145,12 @@ Output: `target/PeacefulPlayers-<version>.jar`
 ## CI/CD
 
 Builds are automated via Woodpecker CI:
-- **Push to main**: Builds and uploads `PeacefulPlayers-X.Y.Z-SNAPSHOT.jar`
-- **Tag `vX.Y.Z`**: Builds release, uploads `PeacefulPlayers.jar` (latest) and `PeacefulPlayers-X.Y.Z.jar` (versioned), then bumps version
+- **Push to main**: Builds and uploads `PeacefulPlayers-SNAPSHOT.jar` to S3
+- **Tag `vX.Y.Z`**: Builds release and:
+  - Uploads to S3: `PeacefulPlayers.jar` (latest) + `PeacefulPlayers-X.Y.Z.jar`
+  - Creates GitHub Release with JAR attached
+  - Publishes to Modrinth
+  - Bumps version to next SNAPSHOT
 
 ## License
 
