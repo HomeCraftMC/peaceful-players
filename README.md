@@ -11,6 +11,7 @@ A Paper plugin for family-friendly Minecraft servers that allows players to togg
 - **Neutral Mobs**: Hostile mobs won't target peaceful players - they walk around as if the player doesn't exist
 - **Revenge Mechanic**: If a peaceful player attacks a mob, only that specific mob can target back (not nearby mobs)
 - **Keep Inventory**: Peaceful players keep their inventory and XP on death
+- **No Hunger Loss**: Peaceful players don't lose hunger (food level) - just like vanilla peaceful mode
 - **Damage Reduction**: Configurable damage reduction for peaceful players (default: 0%)
 - **Per-Player Settings**: Each player can have different mode (peaceful or survival)
 - **Persistent**: Settings are saved to disk and persist across server restarts
@@ -58,7 +59,12 @@ When a player is in peaceful mode:
    - No items drop
    - No XP orbs drop
 
-4. **Damage Reduction** (configurable): Peaceful players can receive reduced damage from all sources
+4. **No Hunger Loss**: Peaceful players never lose hunger
+   - Food level stays constant (won't decrease from sprinting, jumping, etc.)
+   - Players can still eat to restore hunger if already low
+   - Mimics vanilla peaceful mode hunger behavior
+
+5. **Damage Reduction** (configurable): Peaceful players can receive reduced damage from all sources
    - Configured in `config.yml`
    - Default: 0% (no reduction)
    - Set to 0.5 for 50% reduction, 1.0 for invincibility
@@ -124,6 +130,7 @@ Players not in the file default to PEACEFUL mode.
 - `EntityDamageEvent` - Applies damage reduction for peaceful players
 - `EntityDeathEvent` - Cleans up tracked mobs when they die
 - `PlayerDeathEvent` - Keeps inventory for peaceful players
+- `FoodLevelChangeEvent` - Prevents hunger loss for peaceful players
 
 ## Building from Source
 

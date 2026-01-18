@@ -5,6 +5,7 @@ import pl.psalkowski.peacefulplayers.command.PeacefulCommand;
 import pl.psalkowski.peacefulplayers.listener.MobTargetListener;
 import pl.psalkowski.peacefulplayers.listener.PlayerDamageListener;
 import pl.psalkowski.peacefulplayers.listener.PlayerDeathListener;
+import pl.psalkowski.peacefulplayers.listener.PlayerHungerListener;
 
 public class PeacefulPlayersPlugin extends JavaPlugin {
 
@@ -27,6 +28,7 @@ public class PeacefulPlayersPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MobTargetListener(modeManager), this);
         getServer().getPluginManager().registerEvents(new PlayerDeathListener(modeManager), this);
         getServer().getPluginManager().registerEvents(new PlayerDamageListener(modeManager, damageReduction), this);
+        getServer().getPluginManager().registerEvents(new PlayerHungerListener(modeManager), this);
 
         getLogger().info("PeacefulPlayers enabled! Damage reduction: " + (damageReduction * 100) + "%");
     }
