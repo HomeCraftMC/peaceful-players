@@ -69,23 +69,29 @@ steps:
     commands:
       - apk add --no-cache curl yq
       - |
+        set -e
         VERSION=$${CI_COMMIT_TAG#v}
         GAME_VERSIONS=$$(yq -o=json '.game_versions' modrinth.yml)
         LOADERS=$$(yq -o=json '.loaders' modrinth.yml)
-        curl -X POST "https://api.modrinth.com/v2/version" \
+        RESPONSE=$$(curl -s -X POST "https://api.modrinth.com/v2/version" \
           -H "Authorization: $$MODRINTH_TOKEN" \
           -F "data={
             \"name\": \"v$$VERSION\",
             \"version_number\": \"$$VERSION\",
             \"project_id\": \"peaceful-players\",
-            \"file_parts\": [\"PeacefulPlayers-$$VERSION.jar\"],
+            \"file_parts\": [\"file\"],
             \"dependencies\": [],
             \"game_versions\": $$GAME_VERSIONS,
             \"loaders\": $$LOADERS,
             \"version_type\": \"release\",
             \"featured\": true
           }" \
-          -F "PeacefulPlayers-$$VERSION.jar=@target/PeacefulPlayers-$$VERSION.jar"
+          -F "file=@target/PeacefulPlayers-$$VERSION.jar")
+        echo "$$RESPONSE"
+        if echo "$$RESPONSE" | grep -q '"error"'; then
+          echo "Modrinth publish failed!"
+          exit 1
+        fi
         echo "Published to Modrinth"
 
   bump-version:
@@ -97,17 +103,19 @@ steps:
         from_secret: github_token
     commands:
       - apt-get update -qq && apt-get install -y -qq git
-      - VERSION=${CI_COMMIT_TAG#v}
-      - IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-      - NEXT_MINOR=$((MINOR + 1))
-      - NEXT_VERSION="${MAJOR}.${NEXT_MINOR}.0-SNAPSHOT"
-      - echo "Bumping version to $NEXT_VERSION"
-      - git config --global user.email "ci@homecraftmc.com"
-      - git config --global user.name "HomeCraft CI"
-      - git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/HomeCraftMC/peaceful-players.git
-      - git fetch origin main
-      - git checkout main
-      - mvn versions:set -DnewVersion=$NEXT_VERSION -DgenerateBackupPoms=false -q
-      - git add pom.xml
-      - git commit -m "Bump version to $NEXT_VERSION [skip ci]"
-      - git push origin main
+      - |
+        VERSION=$${CI_COMMIT_TAG#v}
+        MAJOR=$$(echo $$VERSION | cut -d. -f1)
+        MINOR=$$(echo $$VERSION | cut -d. -f2)
+        NEXT_MINOR=$$((MINOR + 1))
+        NEXT_VERSION="$${MAJOR}.$${NEXT_MINOR}.0-SNAPSHOT"
+        echo "Bumping version to $$NEXT_VERSION"
+        git config --global user.email "ci@homecraftmc.com"
+        git config --global user.name "HomeCraft CI"
+        git remote set-url origin https://x-access-token:$${GITHUB_TOKEN}@github.com/HomeCraftMC/peaceful-players.git
+        git fetch origin main
+        git checkout main
+        mvn versions:set -DnewVersion=$$NEXT_VERSION -DgenerateBackupPoms=false -q
+        git add pom.xml
+        git commit -m "Bump version to $$NEXT_VERSION [skip ci]"
+        git push origin main
