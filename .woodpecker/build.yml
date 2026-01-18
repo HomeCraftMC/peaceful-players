@@ -32,10 +32,30 @@ steps:
       - mc alias set minio https://s3.psalkowski.pl "$S3_ACCESS_KEY" "$S3_SECRET_KEY"
       - export VERSION=$(cat .version) && mc cp target/PeacefulPlayers-$VERSION.jar minio/minecraft-plugins/peaceful-players/PeacefulPlayers-$VERSION.jar && echo "Uploaded PeacefulPlayers-$VERSION.jar"
 
+  check-changelog:
+    image: alpine:latest
+    when:
+      - event: tag
+    commands:
+      - |
+        set -e
+        VERSION=$${CI_COMMIT_TAG#v}
+
+        # Check if changelog has entry for this version
+        if ! grep -q "^## \[$$VERSION\]" CHANGELOG.md; then
+          echo "ERROR: No changelog entry found for version $$VERSION"
+          echo "Please add a '## [$$VERSION]' section to CHANGELOG.md before releasing"
+          exit 1
+        fi
+
+        echo "Changelog entry found for v$$VERSION"
+
   build-release:
     image: maven:3.9-eclipse-temurin-21
     when:
       - event: tag
+    depends_on:
+      - check-changelog
     commands:
       - VERSION=${CI_COMMIT_TAG#v}
       - echo "Building release version $VERSION"
@@ -46,6 +66,8 @@ steps:
     image: minio/mc:latest
     when:
       - event: tag
+    depends_on:
+      - build-release
     environment:
       S3_ACCESS_KEY:
         from_secret: s3_access_key
@@ -63,16 +85,26 @@ steps:
     image: alpine:latest
     when:
       - event: tag
+    depends_on:
+      - build-release
     environment:
       MODRINTH_TOKEN:
         from_secret: modrinth_token
     commands:
-      - apk add --no-cache curl yq
+      - apk add --no-cache curl yq jq sed
       - |
         set -e
         VERSION=$${CI_COMMIT_TAG#v}
         GAME_VERSIONS=$$(yq -o=json '.game_versions' modrinth.yml)
         LOADERS=$$(yq -o=json '.loaders' modrinth.yml)
+
+        # Extract changelog for this version from CHANGELOG.md
+        CHANGELOG=$$(sed -n "/^## \[$$VERSION\]/,/^## \[/p" CHANGELOG.md | sed '$$d' | tail -n +2)
+        if [ -z "$$CHANGELOG" ]; then
+          CHANGELOG="Release v$$VERSION"
+        fi
+        CHANGELOG_JSON=$$(printf '%s' "$$CHANGELOG" | jq -Rs .)
+
         RESPONSE=$$(curl -s -X POST "https://api.modrinth.com/v2/version" \
           -H "Authorization: $$MODRINTH_TOKEN" \
           -F "data={
@@ -84,7 +116,8 @@ steps:
             \"game_versions\": $$GAME_VERSIONS,
             \"loaders\": $$LOADERS,
             \"version_type\": \"release\",
-            \"featured\": true
+            \"featured\": true,
+            \"changelog\": $$CHANGELOG_JSON
           }" \
           -F "file=@target/PeacefulPlayers-$$VERSION.jar")
         echo "$$RESPONSE"
@@ -94,10 +127,61 @@ steps:
         fi
         echo "Published to Modrinth"
 
+  github-release:
+    image: alpine:latest
+    when:
+      - event: tag
+    depends_on:
+      - build-release
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    commands:
+      - apk add --no-cache curl jq sed
+      - |
+        set -e
+        VERSION=$${CI_COMMIT_TAG#v}
+
+        # Extract changelog for this version
+        CHANGELOG=$$(sed -n "/^## \[$$VERSION\]/,/^## \[/p" CHANGELOG.md | sed '$$d' | tail -n +2)
+        if [ -z "$$CHANGELOG" ]; then
+          CHANGELOG="Release v$$VERSION"
+        fi
+
+        # Create GitHub Release
+        RELEASE_DATA=$$(jq -n \
+          --arg tag "v$$VERSION" \
+          --arg name "v$$VERSION" \
+          --arg body "$$CHANGELOG" \
+          '{tag_name: $$tag, name: $$name, body: $$body, draft: false, prerelease: false}')
+
+        RESPONSE=$$(curl -s -X POST "https://api.github.com/repos/HomeCraftMC/peaceful-players/releases" \
+          -H "Authorization: token $$GITHUB_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d "$$RELEASE_DATA")
+
+        RELEASE_ID=$$(echo "$$RESPONSE" | jq -r '.id')
+        if [ "$$RELEASE_ID" = "null" ]; then
+          echo "Failed to create release: $$RESPONSE"
+          exit 1
+        fi
+
+        # Upload JAR as release asset
+        curl -s -X POST "https://uploads.github.com/repos/HomeCraftMC/peaceful-players/releases/$$RELEASE_ID/assets?name=PeacefulPlayers-$$VERSION.jar" \
+          -H "Authorization: token $$GITHUB_TOKEN" \
+          -H "Content-Type: application/java-archive" \
+          --data-binary @target/PeacefulPlayers-$$VERSION.jar
+
+        echo "Created GitHub Release v$$VERSION"
+
   bump-version:
     image: maven:3.9-eclipse-temurin-21
     when:
       - event: tag
+    depends_on:
+      - upload-release
+      - publish-modrinth
+      - github-release
     environment:
       GITHUB_TOKEN:
         from_secret: github_token
