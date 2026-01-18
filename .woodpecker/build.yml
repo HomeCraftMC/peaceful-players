@@ -31,6 +31,7 @@ steps:
     commands:
       - mc alias set minio https://s3.psalkowski.pl "$S3_ACCESS_KEY" "$S3_SECRET_KEY"
       - export VERSION=$(cat .version) && mc cp target/PeacefulPlayers-$VERSION.jar minio/minecraft-plugins/peaceful-players/PeacefulPlayers-$VERSION.jar && echo "Uploaded PeacefulPlayers-$VERSION.jar"
+      - mc cp target/PeacefulPlayers-$(cat .version).jar minio/minecraft-plugins/peaceful-players/PeacefulPlayers-SNAPSHOT.jar && echo "Uploaded PeacefulPlayers-SNAPSHOT.jar"
 
   check-changelog:
     image: alpine:latest
