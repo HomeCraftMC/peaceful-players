@@ -1,3 +1,7 @@
+<p align="center">
+  <img src=".github/logo.jpeg" alt="PeacefulPlayers" width="128">
+</p>
+
 # PeacefulPlayers
 
 A Paper plugin for family-friendly Minecraft servers that allows players to toggle "peaceful mode" where hostile mobs ignore them until attacked.
