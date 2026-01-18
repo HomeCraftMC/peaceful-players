@@ -29,11 +29,11 @@ public class PlayerModeManager {
     }
 
     public Mode getMode(Player player) {
-        return playerModes.getOrDefault(player.getUniqueId(), Mode.SURVIVAL);
+        return playerModes.getOrDefault(player.getUniqueId(), Mode.PEACEFUL);
     }
 
     public void setMode(Player player, Mode mode) {
-        if (mode == Mode.SURVIVAL) {
+        if (mode == Mode.PEACEFUL) {
             playerModes.remove(player.getUniqueId());
         } else {
             playerModes.put(player.getUniqueId(), mode);

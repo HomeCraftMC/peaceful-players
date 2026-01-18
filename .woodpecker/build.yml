@@ -1,0 +1,24 @@
+---
+when:
+  - event: tag
+    tag: "v*"
+  - event: manual
+
+steps:
+  build:
+    image: maven:3.9-eclipse-temurin-21
+    commands:
+      - mvn clean package -DskipTests -q
+      - cp target/PeacefulPlayers-*.jar target/PeacefulPlayers.jar
+
+  upload:
+    image: minio/mc:latest
+    environment:
+      S3_ACCESS_KEY:
+        from_secret: s3_access_key
+      S3_SECRET_KEY:
+        from_secret: s3_secret_key
+    commands:
+      - mc alias set minio https://s3.psalkowski.pl "$S3_ACCESS_KEY" "$S3_SECRET_KEY"
+      - mc cp target/PeacefulPlayers.jar minio/minecraft-plugins/PeacefulPlayers.jar
+      - echo "Uploaded to https://s3.psalkowski.pl/minecraft-plugins/PeacefulPlayers.jar"
