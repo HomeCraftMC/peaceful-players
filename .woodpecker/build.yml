@@ -16,7 +16,6 @@ steps:
       - mvn clean package -DskipTests -q
       - VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
       - echo "Built version $VERSION"
-      - mv target/PeacefulPlayers-${VERSION}.jar target/PeacefulPlayers-SNAPSHOT.jar
 
   upload-snapshot:
     image: minio/mc:latest
@@ -29,9 +28,10 @@ steps:
       S3_SECRET_KEY:
         from_secret: s3_secret_key
     commands:
+      - VERSION=$(cat pom.xml | grep -m1 '<version>' | sed 's/.*<version>\(.*\)<\/version>.*/\1/')
       - mc alias set minio https://s3.psalkowski.pl "$S3_ACCESS_KEY" "$S3_SECRET_KEY"
-      - mc cp target/PeacefulPlayers-SNAPSHOT.jar minio/minecraft-plugins/peaceful-players/PeacefulPlayers-SNAPSHOT.jar
-      - echo "Uploaded to https://s3.psalkowski.pl/minecraft-plugins/peaceful-players/PeacefulPlayers-SNAPSHOT.jar"
+      - mc cp target/PeacefulPlayers-${VERSION}.jar minio/minecraft-plugins/peaceful-players/PeacefulPlayers-${VERSION}.jar
+      - echo "Uploaded to https://s3.psalkowski.pl/minecraft-plugins/peaceful-players/PeacefulPlayers-${VERSION}.jar"
 
   build-release:
     image: maven:3.9-eclipse-temurin-21
